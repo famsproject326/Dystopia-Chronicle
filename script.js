@@ -5,7 +5,7 @@ canvas.height = window.innerHeight;
 
 let player = { x: canvas.width / 2, y: canvas.height / 2, size: 30, vx: 0, vy: 0 };
 let joy = { active: false, startX: 0, startY: 0 };
-let gameMode = "EXPLORE"; 
+let gameMode = "EXPLORE";
 
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
@@ -13,18 +13,10 @@ window.addEventListener("touchstart", (e) => {
     const centerY = canvas.height / 2;
     const distFromCenter = Math.hypot(t.clientX - centerX, t.clientY - centerY);
     
-    // AIホログラムをタップした時
     if (distFromCenter < 60) {
-        if (gameMode === "EXPLORE") {
-            // 距離が近くても遠くてもタップでハッキング開始（または条件付きにするならここにifを追加）
-            gameMode = "HACKING";
-        } else {
-            gameMode = "EXPLORE";
-        }
+        gameMode = (gameMode === "EXPLORE") ? "HACKING" : "EXPLORE";
         return;
     }
-
-    // 移動開始
     if (gameMode === "EXPLORE") {
         joy.active = true;
         joy.startX = t.clientX;
@@ -45,38 +37,25 @@ window.addEventListener("touchend", () => {
 
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     if (gameMode === "EXPLORE") {
         player.x += player.vx;
         player.y += player.vy;
-
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
+        const centerX = canvas.width / 2, centerY = canvas.height / 2;
         const distToAI = Math.hypot(player.x - centerX, player.y - centerY);
-        const isNear = distToAI < 100;
-
-        // ★ここを修正：近くにいたらピンク、遠ければ青
-        ctx.strokeStyle = isNear ? "#f0f" : "#0ff";
+        ctx.strokeStyle = (distToAI < 100) ? "#f0f" : "#0ff";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(centerX, centerY, 60, 0, Math.PI * 2);
         ctx.stroke();
-
-        ctx.fillStyle = isNear ? "#f0f" : "#0ff";
-        ctx.font = "bold 20px 'Courier New'";
+        ctx.fillStyle = (distToAI < 100) ? "#f0f" : "#0ff";
         ctx.textAlign = "center";
-        ctx.fillText(isNear ? "TAP TO HACK" : "SYSTEM_LOCKED", centerX, centerY + 100);
-
+        ctx.fillText((distToAI < 100) ? "TAP TO HACK" : "SYSTEM_LOCKED", centerX, centerY + 100);
         ctx.fillStyle = "#fff";
         ctx.fillRect(player.x, player.y, player.size, player.size);
     } else {
-        // ハッキング画面
         ctx.fillStyle = "rgba(0,0,0,0.9)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#0f0";
-        ctx.font = "30px 'Courier New'";
-        ctx.textAlign = "center";
-        ctx.fillText("PASSWORD REQUIRED", canvas.width/2, canvas.height/2);
+        if (typeof drawKeypad === 'function') drawKeypad(ctx, canvas.width, canvas.height);
     }
     requestAnimationFrame(loop);
 }
