@@ -16,29 +16,30 @@ let roomIndex = 1;
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     
-    // ハッキング画面の処理
+    // --- 【モード判定1：ハッキング中】 ---
     if (gameMode === "HACKING") {
-        // [戻るボタン] のエリア(上部60px)だけをタップした時だけ戻る
-        if (t.clientY < 60) {
-            gameMode = "EXPLORE";
-            return;
-        }
-        // それ以外の場所（数字ボタン）の判定
+        // [戻るボタン] のエリアだけをタップした時だけ戻る
+        if (t.clientY < 80) { gameMode = "EXPLORE"; return; }
+        // 数字ボタン判定
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
         if (clickedNum !== null) console.log("入力: " + clickedNum);
-        return;
+        return; // 他の場所を触っても無視
     }
 
-    // 部屋移動 (左右15%)
+    // --- 【モード判定2：探索中】 ---
+    // A. 部屋移動判定（左右端のみ）
     if (t.clientX < window.innerWidth * 0.15 && roomIndex > 0) { roomIndex--; return; }
     if (t.clientX > window.innerWidth * 0.85 && roomIndex < 2) { roomIndex++; return; }
 
-    // AIエリア (中央の部屋のみ)
+    // B. ハッキング起動判定（中央部屋 かつ 円の中100px以内）
     if (roomIndex === 1) {
-        const dist = Math.hypot((player.x + 15) - window.innerWidth/2, (player.y + 15) - window.innerHeight/2);
-        if (dist < 120) { gameMode = "HACKING"; return; }
+        const pCenterX = player.x + 15;
+        const pCenterY = player.y + 15;
+        const dist = Math.hypot(pCenterX - window.innerWidth/2, pCenterY - window.innerHeight/2);
+        if (dist < 100) { gameMode = "HACKING"; return; }
     }
 
+    // C. ジョイスティック操作
     joy.active = true; joy.startX = t.clientX; joy.startY = t.clientY;
 });
 
@@ -47,6 +48,7 @@ window.addEventListener("touchmove", (e) => {
     player.vx = (e.touches[0].clientX - joy.startX) / 10;
     player.vy = (e.touches[0].clientY - joy.startY) / 10;
 });
+
 window.addEventListener("touchend", () => { joy.active = false; player.vx = 0; player.vy = 0; });
 
 function loop() {
@@ -68,8 +70,8 @@ function loop() {
         }
         ctx.fillStyle = "#fff"; ctx.fillRect(player.x, player.y, 30, 30);
     } else {
-        ctx.fillStyle = "rgba(0,0,0,0.9)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-        ctx.fillStyle = "#f00"; ctx.textAlign = "center"; ctx.fillText("[BACK TO ROOM]", window.innerWidth/2, 40);
+        ctx.fillStyle = "rgba(0,0,0,0.95)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        ctx.fillStyle = "#f00"; ctx.textAlign = "center"; ctx.fillText("[BACK]", window.innerWidth/2, 50);
         drawKeypad(ctx, window.innerWidth, window.innerHeight);
     }
     requestAnimationFrame(loop);
