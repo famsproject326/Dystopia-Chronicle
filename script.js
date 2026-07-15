@@ -12,38 +12,40 @@ let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight - 100, size:
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
 let roomIndex = 1;
+let inputCode = []; // 入力されたコードを保存
 
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     
-    // 1. ハッキング中
     if (gameMode === "HACKING") {
-        if (t.clientY < 80) { gameMode = "EXPLORE"; return; }
+        if (t.clientY < 80) { gameMode = "EXPLORE"; inputCode = []; return; }
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
-        if (clickedNum !== null) console.log("入力: " + clickedNum);
+        if (clickedNum !== null) {
+            inputCode.push(clickedNum);
+            // 4桁溜まったら判定
+            if (inputCode.length === 4) {
+                if (inputCode.join("") === "1234") { // 今回の正解は 1234 に設定！
+                    alert("ACCESS GRANTED!");
+                    gameMode = "EXPLORE";
+                } else {
+                    alert("WRONG CODE");
+                }
+                inputCode = [];
+            }
+        }
         return; 
     }
 
-    // 2. 部屋移動ボタン（画面端の特定エリアのみ）
     const btnArea = 100;
-    const isLeftBtn = (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea);
-    const isRightBtn = (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea);
+    if (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex > 0) { roomIndex--; return; }
+    if (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex < 2) { roomIndex++; return; }
 
-    if (isLeftBtn && roomIndex > 0) { roomIndex--; return; }
-    if (isRightBtn && roomIndex < 2) { roomIndex++; return; }
-
-    // 3. ハッキング起動（円の中かつプレイヤーが近く）
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     const distFromCenter = Math.hypot(t.clientX - centerX, t.clientY - centerY);
     const playerDist = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
-    
-    if (roomIndex === 1 && distFromCenter < 100 && playerDist < 120) {
-        gameMode = "HACKING";
-        return;
-    }
+    if (roomIndex === 1 && distFromCenter < 100 && playerDist < 120) { gameMode = "HACKING"; return; }
 
-    // 4. ジョイスティック移動（ボタン以外を触った時のみ）
     joy.active = true; joy.startX = t.clientX; joy.startY = t.clientY;
 });
 
@@ -73,6 +75,7 @@ function loop() {
     } else {
         ctx.fillStyle = "rgba(0,0,0,0.95)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
         ctx.fillStyle = "#f00"; ctx.fillText("[BACK]", window.innerWidth/2, 50);
+        ctx.fillStyle = "#fff"; ctx.fillText("CODE: " + inputCode.join(""), window.innerWidth/2, 100); // 現在の入力表示
         drawKeypad(ctx, window.innerWidth, window.innerHeight);
     }
     requestAnimationFrame(loop);
