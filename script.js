@@ -14,9 +14,8 @@ const roomNames = ["302", "303", "ロビー", "301"];
 let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight - 100, size: 30, vx: 0, vy: 0 };
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
-let roomIndex = 2;
+let roomIndex = 2; // 初期位置：ロビー
 let inputCode = [];
-let isEvButtonPressed = false; // ボタンの色変更用フラグ
 
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
@@ -41,12 +40,9 @@ window.addEventListener("touchstart", (e) => {
     const distToPlayer = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
     const isTappingButton = (t.clientX > centerX - 50 && t.clientX < centerX + 50 && t.clientY > centerY - 50 && t.clientY < centerY + 50);
 
+    // 近づいていて、ボタンをタップしたらHACKINGへ
     if (roomIndex === 2 && isTappingButton && distToPlayer < 120) {
-        isEvButtonPressed = true;
-        setTimeout(() => {
-            isEvButtonPressed = false;
-            gameMode = "HACKING";
-        }, 200);
+        gameMode = "HACKING";
         return;
     }
 
@@ -77,9 +73,14 @@ function loop() {
         ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
         
         if (roomIndex === 2) {
-            ctx.strokeStyle = isEvButtonPressed ? "#f0f" : "#00f";
-            ctx.strokeRect(window.innerWidth/2 - 50, window.innerHeight/2 - 50, 100, 100);
-            ctx.fillText("EV", window.innerWidth/2, window.innerHeight/2 + 80);
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const distToPlayer = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
+            
+            // プレイヤーが近づくとピンクに！
+            ctx.strokeStyle = (distToPlayer < 120) ? "#f0f" : "#00f";
+            ctx.strokeRect(centerX - 50, centerY - 50, 100, 100);
+            ctx.fillText("EV", centerX, centerY + 80);
         }
         ctx.fillStyle = "#fff"; ctx.fillRect(player.x, player.y, 30, 30);
     } else {
