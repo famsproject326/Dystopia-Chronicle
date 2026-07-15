@@ -16,7 +16,7 @@ let roomIndex = 1;
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     
-    // 1. ハッキングモード（[BACK]のみ反応）
+    // 1. ハッキング中：[BACK]エリア(上部80px)のみ反応
     if (gameMode === "HACKING") {
         if (t.clientY < 80) { gameMode = "EXPLORE"; return; }
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
@@ -24,11 +24,12 @@ window.addEventListener("touchstart", (e) => {
         return; 
     }
 
-    // 2. 探索モード：部屋移動（左右端 15% のみ）
-    if (t.clientX < window.innerWidth * 0.15 && roomIndex > 0) { roomIndex--; return; }
-    if (t.clientX > window.innerWidth * 0.85 && roomIndex < 2) { roomIndex++; return; }
+    // 2. 探索中：部屋移動ボタンエリア（左右端の高さ中央付近）
+    const btnArea = 100;
+    if (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex > 0) { roomIndex--; return; }
+    if (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex < 2) { roomIndex++; return; }
 
-    // 3. 探索モード：ハッキング起動（「円の中」かつ「プレイヤーが近く」）
+    // 3. 探索中：ハッキング起動（円の中かつプレイヤーが近く）
     if (roomIndex === 1) {
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
@@ -40,7 +41,7 @@ window.addEventListener("touchstart", (e) => {
         }
     }
 
-    // 4. 探索モード：ジョイスティック操作
+    // 4. 探索中：ジョイスティック
     joy.active = true; joy.startX = t.clientX; joy.startY = t.clientY;
 });
 
@@ -56,11 +57,11 @@ function loop() {
     if (gameMode === "EXPLORE") {
         player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
-        ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "20px 'Courier New'";
         ctx.fillText("ROOM: " + roomIndex, window.innerWidth/2, 50);
-        if (roomIndex > 0) ctx.fillText("<", 30, window.innerHeight / 2);
-        if (roomIndex < 2) ctx.fillText(">", window.innerWidth - 30, window.innerHeight / 2);
-
+        // ボタン表示（位置合わせ）
+        if (roomIndex > 0) ctx.fillText("<", 50, window.innerHeight / 2);
+        if (roomIndex < 2) ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
         if (roomIndex === 1) {
             const d = Math.hypot((player.x + 15) - window.innerWidth/2, (player.y + 15) - window.innerHeight/2);
             ctx.strokeStyle = (d < 100) ? "#f0f" : "#0ff";
