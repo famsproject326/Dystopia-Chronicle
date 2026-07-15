@@ -1,7 +1,6 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// 解像度調整
 const dpr = window.devicePixelRatio || 1;
 canvas.width = window.innerWidth * dpr;
 canvas.height = window.innerHeight * dpr;
@@ -9,7 +8,11 @@ canvas.style.width = window.innerWidth + "px";
 canvas.style.height = window.innerHeight + "px";
 ctx.scale(dpr, dpr);
 
-let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight / 2 - 15, size: 30, vx: 0, vy: 0 };
+let player = { 
+    x: window.innerWidth / 2 - 15, 
+    y: window.innerHeight - 100, 
+    size: 30, vx: 0, vy: 0 
+};
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
 
@@ -42,7 +45,7 @@ window.addEventListener("touchend", () => {
 });
 
 function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     
     if (gameMode === "EXPLORE") {
         player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
@@ -70,12 +73,8 @@ function loop() {
     } else {
         ctx.fillStyle = "rgba(0,0,0,0.9)";
         ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-        if (typeof drawKeypad !== 'undefined') {
-            drawKeypad(ctx, window.innerWidth, window.innerHeight);
-        }
+        if (typeof drawKeypad !== 'undefined') drawKeypad(ctx, window.innerWidth, window.innerHeight);
     }
     requestAnimationFrame(loop);
 }
-
-// 実行開始
 loop();
