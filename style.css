@@ -1,1 +1,9 @@
-jpd
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #0a0a0a;
+    font-family: 'Courier New', Courier, monospace;
+}
+canvas {
+    display: block;
+}
