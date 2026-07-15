@@ -8,11 +8,18 @@ canvas.style.width = window.innerWidth + "px";
 canvas.style.height = window.innerHeight + "px";
 ctx.scale(dpr, dpr);
 
+// --- キャラクター配置データ ---
+const roomCharacters = {
+    0: ["ジーマ", "ショウ"], // 303号室
+    1: ["R4", "ヒロ"],      // 302号室
+    2: ["タイ"]             // 301号室
+};
+
 let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight - 100, size: 30, vx: 0, vy: 0 };
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
-let roomIndex = 1;
-let inputCode = []; // 入力されたコードを保存
+let roomIndex = 1; // 初期位置302
+let inputCode = [];
 
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
@@ -22,14 +29,9 @@ window.addEventListener("touchstart", (e) => {
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
         if (clickedNum !== null) {
             inputCode.push(clickedNum);
-            // 4桁溜まったら判定
             if (inputCode.length === 4) {
-                if (inputCode.join("") === "1234") { // 今回の正解は 1234 に設定！
-                    alert("ACCESS GRANTED!");
-                    gameMode = "EXPLORE";
-                } else {
-                    alert("WRONG CODE");
-                }
+                if (inputCode.join("") === "1234") { alert("ACCESS GRANTED!"); gameMode = "EXPLORE"; }
+                else { alert("WRONG CODE"); }
                 inputCode = [];
             }
         }
@@ -61,10 +63,19 @@ function loop() {
     if (gameMode === "EXPLORE") {
         player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
+        
+        // 部屋番号とキャラの描画
         ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "20px 'Courier New'";
-        ctx.fillText("ROOM: " + roomIndex, window.innerWidth/2, 50);
+        ctx.fillText("ROOM: " + (roomIndex === 0 ? "303" : roomIndex === 1 ? "302" : "301"), window.innerWidth/2, 50);
+        
+        // キャラクター表示
+        ctx.textAlign = "left"; ctx.fillStyle = "#ff0";
+        const chars = roomCharacters[roomIndex] || [];
+        chars.forEach((name, i) => ctx.fillText("NPC: " + name, 20, 100 + (i * 30)));
+
         if (roomIndex > 0) ctx.fillText("<", 50, window.innerHeight / 2);
         if (roomIndex < 2) ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
+        
         if (roomIndex === 1) {
             const d = Math.hypot((player.x + 15) - window.innerWidth/2, (player.y + 15) - window.innerHeight/2);
             ctx.strokeStyle = (d < 100) ? "#f0f" : "#0ff";
@@ -75,7 +86,7 @@ function loop() {
     } else {
         ctx.fillStyle = "rgba(0,0,0,0.95)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
         ctx.fillStyle = "#f00"; ctx.fillText("[BACK]", window.innerWidth/2, 50);
-        ctx.fillStyle = "#fff"; ctx.fillText("CODE: " + inputCode.join(""), window.innerWidth/2, 100); // 現在の入力表示
+        ctx.fillStyle = "#fff"; ctx.fillText("CODE: " + inputCode.join(""), window.innerWidth/2, 100);
         drawKeypad(ctx, window.innerWidth, window.innerHeight);
     }
     requestAnimationFrame(loop);
