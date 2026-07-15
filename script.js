@@ -27,17 +27,14 @@ let talkMessage = "";
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     
-    // 1. 会話終了
+    // 1. 会話中のクリックで会話終了
     if (talkMessage !== "") { talkMessage = ""; return; }
 
-    // 2. 移動ボタン判定（最優先）
-    const btnArea = 100;
-    if (t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea) {
-        if (t.clientX < btnArea) { roomIndex = (roomIndex === 0) ? 3 : roomIndex - 1; return; }
-        if (t.clientX > window.innerWidth - btnArea) { roomIndex = (roomIndex === 3) ? 0 : roomIndex + 1; return; }
-    }
+    // 2. 移動ボタン（画面端の非常に狭いエリアのみ）
+    if (t.clientX < 80) { roomIndex = (roomIndex === 0) ? 3 : roomIndex - 1; return; }
+    if (t.clientX > window.innerWidth - 80) { roomIndex = (roomIndex === 3) ? 0 : roomIndex + 1; return; }
 
-    // 3. ハッキング判定
+    // 3. ハッキング中ならキーパッド操作
     if (gameMode === "HACKING") {
         if (t.clientY < 80) { gameMode = "EXPLORE"; inputCode = []; return; }
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
@@ -55,8 +52,7 @@ window.addEventListener("touchstart", (e) => {
     // 4. キャラクター会話判定
     const charsInRoom = characters.filter(c => c.room === roomIndex);
     for (let char of charsInRoom) {
-        const distToChar = Math.hypot((player.x + 15) - (char.x + 15), (player.y + 15) - (char.y + 15));
-        if (distToChar < 150 && Math.hypot(t.clientX - char.x, t.clientY - char.y) < 100) {
+        if (Math.hypot(t.clientX - (char.x + 15), t.clientY - (char.y + 15)) < 80) {
             talkMessage = char.name + ": " + char.talk;
             return;
         }
@@ -66,7 +62,7 @@ window.addEventListener("touchstart", (e) => {
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     const distToPlayer = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
-    if (roomIndex === 2 && t.clientX > centerX - 50 && t.clientX < centerX + 50 && t.clientY > centerY - 50 && t.clientY < centerY + 50 && distToPlayer < 120) {
+    if (roomIndex === 2 && Math.hypot(t.clientX - centerX, t.clientY - centerY) < 60 && distToPlayer < 120) {
         gameMode = "HACKING"; return;
     }
 
@@ -106,4 +102,18 @@ function loop() {
         if (roomIndex === 2) {
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
-            const dist = Math.hypot((player.x + 15) -
+            const dist = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
+            ctx.strokeStyle = (dist < 120) ? "#f0f" : "#00f";
+            ctx.strokeRect(centerX - 50, centerY - 50, 100, 100);
+            ctx.fillText("EV", centerX, centerY + 80);
+        }
+        ctx.fillStyle = "#fff"; ctx.fillRect(player.x, player.y, 30, 30);
+    } else {
+        ctx.fillStyle = "rgba(0,0,0,0.95)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        ctx.fillStyle = "#f00"; ctx.fillText("[BACK]", window.innerWidth/2, 50);
+        ctx.fillStyle = "#fff"; ctx.fillText("CODE: " + inputCode.join(""), window.innerWidth/2, 100);
+        drawKeypad(ctx, window.innerWidth, window.innerHeight);
+    }
+    requestAnimationFrame(loop);
+}
+loop();
