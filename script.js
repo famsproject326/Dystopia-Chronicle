@@ -18,7 +18,7 @@ const roomCharacters = {
 let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight - 100, size: 30, vx: 0, vy: 0 };
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
-let roomIndex = 1; // 初期位置302
+let roomIndex = 1;
 let inputCode = [];
 
 window.addEventListener("touchstart", (e) => {
@@ -64,17 +64,17 @@ function loop() {
         player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
         
-        // 部屋番号とキャラの描画
         ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "20px 'Courier New'";
         ctx.fillText("ROOM: " + (roomIndex === 0 ? "303" : roomIndex === 1 ? "302" : "301"), window.innerWidth/2, 50);
         
-        // キャラクター表示
+        // --- キャラクター名前のみ表示 ---
         ctx.textAlign = "left"; ctx.fillStyle = "#ff0";
+        ctx.font = "18px 'Courier New'";
         const chars = roomCharacters[roomIndex] || [];
-        chars.forEach((name, i) => ctx.fillText("NPC: " + name, 20, 100 + (i * 30)));
+        chars.forEach((name, i) => ctx.fillText(name, 20, 100 + (i * 30)));
 
-        if (roomIndex > 0) ctx.fillText("<", 50, window.innerHeight / 2);
-        if (roomIndex < 2) ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
+        if (roomIndex > 0) { ctx.textAlign = "center"; ctx.fillText("<", 50, window.innerHeight / 2); }
+        if (roomIndex < 2) { ctx.textAlign = "center"; ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2); }
         
         if (roomIndex === 1) {
             const d = Math.hypot((player.x + 15) - window.innerWidth/2, (player.y + 15) - window.innerHeight/2);
