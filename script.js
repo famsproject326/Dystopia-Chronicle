@@ -16,7 +16,7 @@ let roomIndex = 1;
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     
-    // 1. ハッキング中：[BACK]エリア(上部80px)のみ反応
+    // 1. ハッキング中
     if (gameMode === "HACKING") {
         if (t.clientY < 80) { gameMode = "EXPLORE"; return; }
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
@@ -24,24 +24,26 @@ window.addEventListener("touchstart", (e) => {
         return; 
     }
 
-    // 2. 探索中：部屋移動ボタンエリア（左右端の高さ中央付近）
+    // 2. 部屋移動ボタン（画面端の特定エリアのみ）
     const btnArea = 100;
-    if (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex > 0) { roomIndex--; return; }
-    if (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex < 2) { roomIndex++; return; }
+    const isLeftBtn = (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea);
+    const isRightBtn = (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea);
 
-    // 3. 探索中：ハッキング起動（円の中かつプレイヤーが近く）
-    if (roomIndex === 1) {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        const distFromCenter = Math.hypot(t.clientX - centerX, t.clientY - centerY);
-        const playerDist = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
-        if (distFromCenter < 100 && playerDist < 120) {
-            gameMode = "HACKING";
-            return;
-        }
+    if (isLeftBtn && roomIndex > 0) { roomIndex--; return; }
+    if (isRightBtn && roomIndex < 2) { roomIndex++; return; }
+
+    // 3. ハッキング起動（円の中かつプレイヤーが近く）
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const distFromCenter = Math.hypot(t.clientX - centerX, t.clientY - centerY);
+    const playerDist = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
+    
+    if (roomIndex === 1 && distFromCenter < 100 && playerDist < 120) {
+        gameMode = "HACKING";
+        return;
     }
 
-    // 4. 探索中：ジョイスティック
+    // 4. ジョイスティック移動（ボタン以外を触った時のみ）
     joy.active = true; joy.startX = t.clientX; joy.startY = t.clientY;
 });
 
@@ -59,7 +61,6 @@ function loop() {
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
         ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "20px 'Courier New'";
         ctx.fillText("ROOM: " + roomIndex, window.innerWidth/2, 50);
-        // ボタン表示（位置合わせ）
         if (roomIndex > 0) ctx.fillText("<", 50, window.innerHeight / 2);
         if (roomIndex < 2) ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
         if (roomIndex === 1) {
