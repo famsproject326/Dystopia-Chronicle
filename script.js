@@ -8,20 +8,18 @@ canvas.style.width = window.innerWidth + "px";
 canvas.style.height = window.innerHeight + "px";
 ctx.scale(dpr, dpr);
 
-// キャラクターと部屋の設定
 const roomCharacters = { 0: ["ヒロ", "R4"], 1: ["ジーマ", "ショウ"], 2: [], 3: ["タイ"] };
 const roomNames = ["302", "303", "ロビー", "301"];
 
 let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight - 100, size: 30, vx: 0, vy: 0 };
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
-let roomIndex = 2; // 初期位置：ロビー
+let roomIndex = 2;
 let inputCode = [];
+let isEvButtonPressed = false; // ボタンの色変更用フラグ
 
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
-
-    // キーパッド入力中
     if (gameMode === "HACKING") {
         if (t.clientY < 80) { gameMode = "EXPLORE"; inputCode = []; return; }
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
@@ -36,20 +34,22 @@ window.addEventListener("touchstart", (e) => {
         return;
     }
 
-    // 移動用ジョイスティックの開始点
     joy.active = true; joy.startX = t.clientX; joy.startY = t.clientY;
 
-    // EVボタンの当たり判定
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
     const distToPlayer = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
     const isTappingButton = (t.clientX > centerX - 50 && t.clientX < centerX + 50 && t.clientY > centerY - 50 && t.clientY < centerY + 50);
 
     if (roomIndex === 2 && isTappingButton && distToPlayer < 120) {
-        gameMode = "HACKING"; return;
+        isEvButtonPressed = true;
+        setTimeout(() => {
+            isEvButtonPressed = false;
+            gameMode = "HACKING";
+        }, 200);
+        return;
     }
 
-    // 部屋移動ボタン
     if (t.clientX < 100) { roomIndex = (roomIndex === 0) ? 3 : roomIndex - 1; }
     else if (t.clientX > window.innerWidth - 100) { roomIndex = (roomIndex === 3) ? 0 : roomIndex + 1; }
 });
@@ -66,11 +66,9 @@ function loop() {
     if (gameMode === "EXPLORE") {
         player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
-        
         ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "20px 'Courier New'";
         ctx.fillText("ROOM: " + roomNames[roomIndex], window.innerWidth/2, 50);
         
-        // 名前表示
         ctx.textAlign = "left"; ctx.fillStyle = "#ff0";
         roomCharacters[roomIndex].forEach((name, i) => ctx.fillText(name, 20, 100 + (i * 30)));
 
@@ -78,13 +76,11 @@ function loop() {
         ctx.fillText("<", 50, window.innerHeight / 2);
         ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
         
-        // EVボタン（ロビーのみ）
         if (roomIndex === 2) {
-            ctx.strokeStyle = "#00f";
+            ctx.strokeStyle = isEvButtonPressed ? "#f0f" : "#00f";
             ctx.strokeRect(window.innerWidth/2 - 50, window.innerHeight/2 - 50, 100, 100);
             ctx.fillText("EV", window.innerWidth/2, window.innerHeight/2 + 80);
         }
-
         ctx.fillStyle = "#fff"; ctx.fillRect(player.x, player.y, 30, 30);
     } else {
         ctx.fillStyle = "rgba(0,0,0,0.95)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
