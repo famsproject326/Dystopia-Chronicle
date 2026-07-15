@@ -1,63 +1,48 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+// ... (上の移動ロジックはそのまま)
 
-let player = { x: canvas.width / 2, y: canvas.height / 2, size: 30, vx: 0, vy: 0 };
-let joy = { active: false, startX: 0, startY: 0 };
+// モード管理用変数
+let gameMode = "EXPLORE"; // "EXPLORE" か "HACKING"
 
-// タッチ操作（どこでも起点）
-window.addEventListener("touchstart", (e) => {
-    joy.active = true;
-    joy.startX = e.touches[0].clientX;
-    joy.startY = e.touches[0].clientY;
-});
-
-window.addEventListener("touchmove", (e) => {
-    if (!joy.active) return;
-    player.vx = (e.touches[0].clientX - joy.startX) / 10;
-    player.vy = (e.touches[0].clientY - joy.startY) / 10;
-});
-
-window.addEventListener("touchend", () => {
-    joy.active = false;
-    player.vx = 0; player.vy = 0;
-});
-
-// 描画ループ
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // プレイヤー移動
-    player.x += player.vx;
-    player.y += player.vy;
+    // プレイヤー移動（探索モードの時だけ動ける）
+    if (gameMode === "EXPLORE") {
+        player.x += player.vx;
+        player.y += player.vy;
+    }
 
-    // AIホログラムの定義（画面中央）
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const dist = Math.hypot(player.x - centerX, player.y - centerY);
-    const isAccessing = dist < 100;
 
-    // 1. 円を描画
-    ctx.strokeStyle = isAccessing ? "#f0f" : "#0ff";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 60, 0, Math.PI * 2);
-    ctx.stroke();
+    // 1. 探索モードの描画
+    if (gameMode === "EXPLORE") {
+        // AIホログラム
+        ctx.strokeStyle = (dist < 100) ? "#f0f" : "#0ff";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 60, 0, Math.PI * 2);
+        ctx.stroke();
 
-    // 2. 文字を描画（ここが大事！）
-    ctx.fillStyle = isAccessing ? "#f0f" : "#0ff";
-    ctx.font = "bold 20px 'Courier New'";
-    ctx.textAlign = "center";
-    const text = isAccessing ? "ACCESS_GRANTED" : "SYSTEM_LOCKED";
-    ctx.fillText(text, centerX, centerY + 100);
+        // プレイヤー
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(player.x, player.y, player.size, player.size);
 
-    // 3. プレイヤーを描画
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(player.x, player.y, player.size, player.size);
+        // アクセス判定でモード切り替え
+        if (dist < 100) {
+            ctx.fillStyle = "#fff";
+            ctx.fillText("TAP to HACK", centerX, centerY + 100);
+            // タッチでハッキングモードへ（後で実装）
+        }
+    } 
+    // 2. ハッキングモードの描画
+    else if (gameMode === "HACKING") {
+        ctx.fillStyle = "rgba(0,0,0,0.8)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#0f0";
+        ctx.fillText("ENTER PASSWORD", centerX, centerY - 50);
+        // ここにテンキーを置いていく
+    }
     
     requestAnimationFrame(loop);
 }
-
-// 実行開始
-loop();
