@@ -10,15 +10,19 @@ ctx.scale(dpr, dpr);
 
 // --- キャラクター配置データ ---
 const roomCharacters = {
-    0: ["ジーマ", "ショウ"], // 303号室
-    1: ["R4", "ヒロ"],      // 302号室
-    2: ["タイ"]             // 301号室
+    0: ["ヒロ", "R4"],       // 302号室
+    1: ["ジーマ", "ショウ"],  // 303号室
+    2: [],                    // ロビー
+    3: ["タイ"]               // 301号室
 };
+
+// 部屋の名前リスト（一周用）
+const roomNames = ["302", "303", "ロビー", "301"];
 
 let player = { x: window.innerWidth / 2 - 15, y: window.innerHeight - 100, size: 30, vx: 0, vy: 0 };
 let joy = { active: false, startX: 0, startY: 0 };
 let gameMode = "EXPLORE";
-let roomIndex = 1;
+let roomIndex = 2; // 初期位置：ロビー
 let inputCode = [];
 
 window.addEventListener("touchstart", (e) => {
@@ -39,14 +43,20 @@ window.addEventListener("touchstart", (e) => {
     }
 
     const btnArea = 100;
-    if (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex > 0) { roomIndex--; return; }
-    if (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea && roomIndex < 2) { roomIndex++; return; }
+    // 左右の移動ボタン（一周ロジック）
+    if (t.clientX < btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea) { 
+        roomIndex = (roomIndex === 0) ? 3 : roomIndex - 1; return; 
+    }
+    if (t.clientX > window.innerWidth - btnArea && t.clientY > window.innerHeight/2 - btnArea && t.clientY < window.innerHeight/2 + btnArea) { 
+        roomIndex = (roomIndex === 3) ? 0 : roomIndex + 1; return; 
+    }
 
+    // EVボタンの当たり判定（四角形）
     const centerX = window.innerWidth / 2;
     const centerY = window.innerHeight / 2;
-    const distFromCenter = Math.hypot(t.clientX - centerX, t.clientY - centerY);
-    const playerDist = Math.hypot((player.x + 15) - centerX, (player.y + 15) - centerY);
-    if (roomIndex === 1 && distFromCenter < 100 && playerDist < 120) { gameMode = "HACKING"; return; }
+    if (t.clientX > centerX - 50 && t.clientX < centerX + 50 && t.clientY > centerY - 50 && t.clientY < centerY + 50) {
+        if (roomIndex === 2) { alert("EV起動コードを入力せよ"); gameMode = "HACKING"; return; }
+    }
 
     joy.active = true; joy.startX = t.clientX; joy.startY = t.clientY;
 });
@@ -65,23 +75,22 @@ function loop() {
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
         
         ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "20px 'Courier New'";
-        ctx.fillText("ROOM: " + (roomIndex === 0 ? "303" : roomIndex === 1 ? "302" : "301"), window.innerWidth/2, 50);
+        ctx.fillText("ROOM: " + roomNames[roomIndex], window.innerWidth/2, 50);
         
-        // --- キャラクター名前のみ表示 ---
         ctx.textAlign = "left"; ctx.fillStyle = "#ff0";
         ctx.font = "18px 'Courier New'";
         const chars = roomCharacters[roomIndex] || [];
         chars.forEach((name, i) => ctx.fillText(name, 20, 100 + (i * 30)));
 
-        if (roomIndex > 0) { ctx.textAlign = "center"; ctx.fillText("<", 50, window.innerHeight / 2); }
-        if (roomIndex < 2) { ctx.textAlign = "center"; ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2); }
+        ctx.textAlign = "center";
+        ctx.fillText("<", 50, window.innerHeight / 2);
+        ctx.fillText(">", window.innerWidth - 50, window.innerHeight / 2);
         
-        if (roomIndex === 1) {
-            const d = Math.hypot((player.x + 15) - window.innerWidth/2, (player.y + 15) - window.innerHeight/2);
-            ctx.strokeStyle = (d < 100) ? "#f0f" : "#0ff";
-            ctx.beginPath(); ctx.arc(window.innerWidth/2, window.innerHeight/2, 60, 0, Math.PI*2); ctx.stroke();
-            ctx.fillText((d < 100) ? "TAP TO HACK" : "LOCKED", window.innerWidth/2, window.innerHeight/2 + 100);
-        }
+        // EV起動ボタン（四角）
+        ctx.strokeStyle = "#00f";
+        ctx.strokeRect(window.innerWidth/2 - 50, window.innerHeight/2 - 50, 100, 100);
+        ctx.fillText("EV", window.innerWidth/2, window.innerHeight/2 + 80);
+
         ctx.fillStyle = "#fff"; ctx.fillRect(player.x, player.y, 30, 30);
     } else {
         ctx.fillStyle = "rgba(0,0,0,0.95)"; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
