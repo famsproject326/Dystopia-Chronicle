@@ -16,20 +16,24 @@ let roomIndex = 1;
 window.addEventListener("touchstart", (e) => {
     const t = e.touches[0];
     
+    // ハッキング画面での判定
     if (gameMode === "HACKING") {
         const clickedNum = checkKeypadClick(t.clientX, t.clientY);
-        if (clickedNum !== null) console.log("押された数字: " + clickedNum);
-        gameMode = "EXPLORE"; // 簡易的に戻る
+        if (clickedNum !== null) {
+            console.log("入力された数字: " + clickedNum);
+        } else {
+            gameMode = "EXPLORE"; // 余白タップで戻る
+        }
         return;
     }
 
+    // 部屋移動（端をタップ）
     if (t.clientX < window.innerWidth * 0.15 && roomIndex > 0) { roomIndex--; return; }
     if (t.clientX > window.innerWidth * 0.85 && roomIndex < 2) { roomIndex++; return; }
 
+    // AIハッキングエリア（中央のみ）
     if (roomIndex === 1) {
-        const pCenterX = player.x + player.size / 2;
-        const pCenterY = player.y + player.size / 2;
-        const dist = Math.hypot(pCenterX - window.innerWidth / 2, pCenterY - window.innerHeight / 2);
+        const dist = Math.hypot((player.x + 15) - window.innerWidth/2, (player.y + 15) - window.innerHeight/2);
         if (dist < 100) { gameMode = "HACKING"; return; }
     }
 
@@ -49,7 +53,7 @@ function loop() {
         player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
         player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
         
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center";
         ctx.fillText("ROOM: " + roomIndex, window.innerWidth/2, 50);
         if (roomIndex > 0) ctx.fillText("<", 30, window.innerHeight / 2);
         if (roomIndex < 2) ctx.fillText(">", window.innerWidth - 30, window.innerHeight / 2);
