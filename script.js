@@ -20,3 +20,10 @@ function init(){
     requestAnimationFrame(loop);
 }
 window.onload = init;
+
+// script.js の末尾に追記
+window.onerror = function(msg, url, line) {
+    document.body.innerHTML = "<div style='color:red; font-size:20px; padding:20px;'>" + 
+    "ERROR: " + msg + "<br>LINE: " + line + "</div>";
+};
+
