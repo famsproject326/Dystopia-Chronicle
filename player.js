@@ -1,63 +1,12 @@
-// ======================================
-// Project Dystopia Chronicle
-// player.js
-// プレイヤー管理
-// ======================================
-
-let player = {
-    x: 0,
-    y: 0,
-    size: PLAYER.size,
-    vx: 0,
-    vy: 0
-};
-
-// ======================================
-// プレイヤー初期化
-// ======================================
+let player = { x: 0, y: 0, size: PLAYER.size, vx: 0, vy: 0 };
 function resetPlayer(){
     const stage = getCurrentStage();
-    player.x = stage.spawn.x;
-    player.y = stage.spawn.y;
-    player.vx = 0;
-    player.vy = 0;
+    player.x = window.innerWidth / 2 - player.size / 2;
+    player.y = window.innerHeight - 150;
 }
-
-// ======================================
-// プレイヤー更新
-// ======================================
 function updatePlayer(){
-    player.x += player.vx;
-    player.y += player.vy;
-
-    player.x = Math.max(
-        0,
-        Math.min(window.innerWidth - player.size, player.x)
-    );
-
-    player.y = Math.max(
-        0,
-        Math.min(window.innerHeight - player.size, player.y)
-    );
+    player.x = Math.max(0, Math.min(window.innerWidth - player.size, player.x + player.vx));
+    player.y = Math.max(0, Math.min(window.innerHeight - player.size, player.y + player.vy));
 }
-
-// ======================================
-// プレイヤー描画
-// ======================================
-function drawPlayer(ctx){
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(
-        player.x,
-        player.y,
-        player.size,
-        player.size
-    );
-}
-
-// ======================================
-// プレイヤー停止
-// ======================================
-function stopPlayer(){
-    player.vx = 0;
-    player.vy = 0;
-}
+function drawPlayer(ctx){ ctx.fillStyle = "#ffffff"; ctx.fillRect(player.x, player.y, player.size, player.size); }
+function stopPlayer(){ player.vx = 0; player.vy = 0; }
